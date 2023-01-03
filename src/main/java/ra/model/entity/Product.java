@@ -22,21 +22,21 @@ import java.util.List;
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "productId")
+    @Column(name = "ProductId")
     private int productId;
-    @Column(name = "productName")
+    @Column(name = "ProductName")
     private String productName;
-    @Column(name = "productPrice")
+    @Column(name = "ProductPrice")
     private float productPrice;
-    @Column(name = "productQuantity")
+    @Column(name = "ProductQuantity")
     private int productQuantity;
-    @Column(name = "productBirthOfDate")
+    @Column(name = "ProductBirthOfDate")
     @JsonFormat(pattern = "dd/MM/yyyy")
     private Date productBirthOfDate;
-    @Column(name = "productStatus")
+    @Column(name = "ProductStatus")
     private boolean productStatus;
     @ManyToOne
-    @JoinColumn(name = "catalogId")
+    @JoinColumn(name = "CatalogId")
 //    @JsonIgnore
     private Catalog catalog;
     @OneToMany(mappedBy = "product")

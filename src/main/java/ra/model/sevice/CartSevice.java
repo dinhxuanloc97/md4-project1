@@ -15,5 +15,4 @@ public interface CartSevice {
 
     List<Cart> findAllUserId(int userId);
 
-
 }

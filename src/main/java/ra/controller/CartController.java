@@ -27,9 +27,6 @@ import java.util.List;
 public class CartController {
 
     @Autowired
-    private CatalogSevice catalogSevice;
-
-    @Autowired
     private ProductService productService;
 
     @Autowired
@@ -38,12 +35,11 @@ public class CartController {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private CatalogRepository catalogRepository;
 
     //    @PreAuthorize("hasRole('USER')")
 
     @GetMapping("getAllCart")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> getAllCart() {
         CustomUserDetails customUserDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Cart> listCart = cartSevice.findAllUserId(customUserDetails.getUserId());
@@ -61,67 +57,75 @@ public class CartController {
     }
 
     @PostMapping("addCart")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> addToCart(@RequestBody CartRequest cartRequest) {
 
         CustomUserDetails customUserDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        boolean check =true;
+        boolean check = true;
         List<Cart> listCart = cartSevice.findAllUserId(customUserDetails.getUserId());
         Cart cart = new Cart();
         boolean checkexit = false;
         try {
-            for (Cart cart1 :listCart) {
-                if (cart1.getProduct().getProductId()==cartRequest.getProductId()){
+            for (Cart cart1 : listCart) {
+                if (cart1.getProduct().getProductId() == cartRequest.getProductId()) {
                     cart = cart1;
                     checkexit = true;
                     break;
                 }
             }
-            if (checkexit){
-                cart.setQuantity(cart.getQuantity()+cartRequest.getQuantity());
+            if (checkexit) {
+                cart.setQuantity(cart.getQuantity() + cartRequest.getQuantity());
                 cart = cartSevice.insert(cart);
 
-            }else {
+            } else {
                 cart.setQuantity(cartRequest.getQuantity());
                 cart.setProduct(productService.finById(cartRequest.getProductId()));
-                cart.setTotalPrice(cart.getProduct().getProductPrice()*cart.getQuantity());
+                cart.setTotalPrice(cart.getProduct().getProductPrice() * cart.getQuantity());
                 cart.setUsers(userService.findByUserId(customUserDetails.getUserId()));
                 cart = cartSevice.insert(cart);
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             check = false;
             e.printStackTrace();
         }
-        if (check){
+        if (check) {
 
             return ResponseEntity.ok("Thêm sản phẩm vào giỏ hàng thành công!!!");
-        }else {
+        } else {
 
             return ResponseEntity.ok("Thêm sản phẩm vào giỏ hàng thất bại!");
         }
     }
 
     @PutMapping("update/{cartId}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> updateCart(@RequestParam("productQuantity") int productQuantity, @PathVariable("cartId") int cartId) {
         try {
             Cart cart = cartSevice.findById(cartId);
-            if (productQuantity>0) {
+            if (productQuantity > 0) {
                 cart.setQuantity(productQuantity);
-                cart.setTotalPrice(cart.getProduct().getProductPrice()*cart.getQuantity());
+                cart.setTotalPrice(cart.getProduct().getProductPrice() * cart.getQuantity());
                 cartSevice.insert(cart);
-            }else {
+            } else {
                 cartSevice.delete(cartId);
             }
             return ResponseEntity.ok("Đã cập nhập thành công ");
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
-            return  ResponseEntity.ok("Chưa cập nhập được giỏ hàng");
+            return ResponseEntity.ok("Chưa cập nhập được giỏ hàng");
         }
     }
 
     @DeleteMapping("delete/{cartId}")
-    public ResponseEntity<?> deleteCart(@PathVariable("cartId") int cartId){
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> deleteCart(@PathVariable("cartId") int cartId) {
+        try {
             cartSevice.delete(cartId);
-            return ResponseEntity.ok("Đã xóa khỏi giỏ hàng");
+            return ResponseEntity.ok(" Sản Phẩm đã xóa khỏi giỏ hàng");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.ok("Sản phẩm chưa loại bỏ đc giỏ hàng");
+        }
     }
 
 }

@@ -10,7 +10,7 @@ import ra.model.sevice.ProductService;
 
 import java.util.List;
 
-@PreAuthorize("hasRole('ADMIN')")
+//@PreAuthorize("hasRole('ADMIN')")get
 @CrossOrigin(origins = "http://localhost:8080")
 @RestController
 @RequestMapping("api/v1/catalog")
@@ -38,11 +38,13 @@ public class CatalogController {
     }
 
     @PostMapping("create")
+        @PreAuthorize("hasRole('ADMIN')")
     public Catalog createStudent(@RequestBody Catalog catalog){
         return catalogSevice.saveorUpdate(catalog);
     }
 
-    @PutMapping("/{catalogId}")
+    @PutMapping("update/{catalogId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public Catalog updateCatalog(@PathVariable("catalogId") int catalogId,@RequestBody Catalog catalog){
         Catalog catalogUpdate = catalogSevice.findById(catalogId);
         catalogUpdate.setCatalogName(catalog.getCatalogName());
@@ -52,6 +54,7 @@ public class CatalogController {
     }
 
     @DeleteMapping("/delete/{catalogId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public void DeleteCatalog(@PathVariable("catalogId") int catalogId){
         catalogSevice.delete(catalogId);
     }

@@ -13,8 +13,10 @@ import ra.model.entity.ERole;
 import ra.model.entity.Product;
 import ra.model.entity.Roles;
 import ra.model.entity.Users;
+import ra.model.sevice.ProductService;
 import ra.model.sevice.RoleSevice;
 import ra.model.sevice.UserService;
+import ra.payload.request.ChangePasswordRequest;
 import ra.payload.request.LoginRequest;
 import ra.payload.request.SignupRequest;
 import ra.payload.response.JwtResponse;
@@ -32,6 +34,9 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/auth")
 public class    UserController {
+    @Autowired
+    private ProductService productSevice;
+
     @Autowired
     private AuthenticationManager authenticationManager;
     @Autowired
@@ -133,8 +138,68 @@ public class    UserController {
             return ResponseEntity.ok(new JwtResponse(jwt,customUserDetail.getUsername(),customUserDetail.getEmail(),
                     customUserDetail.getPhone(),listRoles));
         }catch (Exception e){
-            return ResponseEntity.ok("Sai ten dang nhap hoac mat khau ");
+            return ResponseEntity.ok("Tên đăng nhâp và mật khẩu sai hoặc chưa đúng ");
+        }
+
+    }
+
+    @PutMapping("addWishList/{productId}")
+    public ResponseEntity<?> addToWishList(@PathVariable("productId") int productId){
+        Product product = productSevice.finById(productId);
+        CustomUserDetails customUserDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Users user = userService.findByUserId(customUserDetails.getUserId());
+        user.getListProduct().add(product);
+        try{
+            user = userService.saveOrUpdate(user);
+            return ResponseEntity.ok("Sản phảm đã được thêm vào danh sách yêu thích ");
+        }catch (Exception e){
+            e.printStackTrace();
+            return ResponseEntity.ok("Chưa thêm được vào danh sách yêu thích");
         }
     }
+
+    @DeleteMapping ("removeWishlist/{productId}")
+    public ResponseEntity<?> removeWishlist(@PathVariable("productId")int productId){
+        CustomUserDetails customUserDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Users user = userService.findByUserId(customUserDetails.getUserId());
+        for (Product product:user.getListProduct()){
+            if (product.getProductId()==productId){
+                user.getListProduct().remove(productSevice.finById(productId));
+                break;
+            }
+        }
+        try {
+            user = userService.saveOrUpdate(user);
+            return  ResponseEntity.ok("Đã loại bỏ khỏi danh sách yêu thích ");
+        }catch (Exception e){
+            e.printStackTrace();
+            return ResponseEntity.ok("Đang bị lỗi trong quá trình xủ lý thử lại sau");
+        }
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping("changePassword")
+    public ResponseEntity<?> changePassWord(@RequestBody ChangePasswordRequest changePasswordRequest){
+        CustomUserDetails customUserDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Users users = userService.findByUserId(customUserDetails.getUserId());
+        boolean check = encoder.matches(changePasswordRequest.getOldPassword(),users.getPassword());
+        if (check){
+            users.setPassword(encoder.encode(changePasswordRequest.getNewPassword()));
+            try {
+                userService.saveOrUpdate(users);
+            }catch (Exception e){
+                e.printStackTrace();
+                check = false;
+            }
+        }else {
+            return ResponseEntity.ok("Mật khẩu cũ không chính xác!");
+        }
+        if (check){
+            return ResponseEntity.ok("Đổi mật khẩu thành công");
+        }else {
+            return ResponseEntity.ok("Có lỗi trong quá trình xử lỹ vui lòng thử lại!!");
+        }
+    }
+
 
 }

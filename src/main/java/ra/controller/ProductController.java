@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import ra.payload.response.ProductShort;
 import ra.payload.request.ProductRequest;
@@ -16,6 +18,7 @@ import ra.model.entity.Product;
 import ra.model.sevice.CatalogSevice;
 import ra.model.sevice.ImageSevice;
 import ra.model.sevice.ProductService;
+import ra.security.CustomUserDetails;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -33,6 +36,7 @@ public class ProductController {
     private ImageSevice imageSevice;
 
     @GetMapping
+//    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public List<ProductShort> getAllProduct(){
         List<ProductShort> listProductShort = new ArrayList<>();
         List<Product> listProduct = productService.findAll();
@@ -57,6 +61,7 @@ public class ProductController {
     }
 
     @PostMapping("create")
+        @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createProduct(@RequestBody ProductRequest productRequest) {
         try{
         Product pro = new Product();
@@ -89,7 +94,8 @@ public class ProductController {
     }
     }
 
-    @PutMapping("/{productId}")
+    @PutMapping("update/{productId}")
+        @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateProduct(@PathVariable("productId") int productId, @RequestBody ProductRequest productRequest) {
         try {
             Product productUpdate = productService.finById(productId);
@@ -118,6 +124,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/delete/{producId}")
+        @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteproduct(@PathVariable("producId") int productId) {
         try{
             Product product  = productService.finById(productId);
@@ -129,7 +136,6 @@ public class ProductController {
         }catch (Exception e){
             return ResponseEntity.ok("Chưa xóa được kiểm tra lại ");
         }
-
     }
 
     @GetMapping("/search")
@@ -138,12 +144,14 @@ public class ProductController {
     }
 
     @GetMapping("/sortByName")
+        @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Product>> sortProductByProductName(@RequestParam("direction") String direction) {
         List<Product> listProduct = productService.sortProductByProductName(direction);
         return new ResponseEntity<>(listProduct, HttpStatus.OK);
     }
 
     @GetMapping("/getPagging")
+        @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> getPagging(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "3") int size) {
@@ -158,6 +166,7 @@ public class ProductController {
     }
 
     @GetMapping("/getPaggingAndSortByName")
+        @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> getPaggingAndSortByName(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "3") int size,
@@ -176,6 +185,27 @@ public class ProductController {
         data.put("totalItems", pageProduct.getTotalElements());
         data.put("totalPages", pageProduct.getTotalPages());
         return new ResponseEntity<>(data, HttpStatus.OK);
+    }
+
+    @GetMapping("getAllWishlist")
+    @PreAuthorize("hasRole('USER')")
+    public List<ProductShort> getAllWishlist(){
+        List<ProductShort> listProductShort = new ArrayList<>();
+        CustomUserDetails customUserDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<Product> listProduct = productService.listWishList(customUserDetails.getUserId());
+        for (Product pro : listProduct){
+            ProductShort productShort = new ProductShort();
+            productShort.setProductId(pro.getProductId());
+            productShort.setProductName(pro.getProductName());
+            productShort.setProductPrice(pro.getProductPrice());
+            productShort.setProductQuantity(pro.getProductQuantity());
+            productShort.setProductBirthOfDate(pro.getProductBirthOfDate());
+            productShort.setProductStatus(pro.isProductStatus());
+            productShort.setCatalog(pro.getCatalog());
+            productShort.getListImage().addAll(pro.getListImage());
+            listProductShort.add(productShort);
+        }
+        return listProductShort;
     }
 
 }

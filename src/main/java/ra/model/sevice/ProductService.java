@@ -15,4 +15,6 @@ public interface ProductService {
     List<Product> seachProductByCatalogId(int catalogId);
     List<Product> sortProductByProductName(String direction);
     Page<Product> getPagging (Pageable pageablee);
+    List<Product> listWishList(int userId);
+
 }

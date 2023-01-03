@@ -1,10 +1,8 @@
 package ra.payload.request;
 
-
 import lombok.Data;
 
 @Data
-public class CartRequest {
+public class WishlistRequest {
     private int productId;
-        private int quantity;
 }

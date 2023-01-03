@@ -56,9 +56,12 @@ public class ProductServiceImp implements ProductService {
             return  productRepository.findAll(Sort.by("productName").descending());
         }
     }
-
     @Override
     public Page<Product> getPagging(Pageable pageablee) {
         return productRepository.findAll(pageablee);
+    }
+    @Override
+    public List<Product> listWishList(int userId) {
+        return productRepository.findAllWishList(userId);
     }
 }
